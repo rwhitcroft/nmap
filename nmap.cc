@@ -1747,6 +1747,11 @@ void nmap_free_mem() {
   nsock_set_default_engine(NULL);
 }
 
+// Flush all logs when HUP is received
+void hup_handler(int sig) {
+  log_flush_all();
+}
+
 int nmap_main(int argc, char *argv[]) {
   int i;
   std::vector<Target *> Targets;
@@ -1904,6 +1909,10 @@ int nmap_main(int argc, char *argv[]) {
      parseable output */
   if (o.verbose)
     output_ports_to_machine_parseable_output(&ports);
+
+  if (signal(SIGHUP, hup_handler) == SIG_ERR) {
+    error("Could not install SIGHUP handler");
+  }
 
 #if defined(HAVE_SIGNAL) && defined(SIGPIPE)
   signal(SIGPIPE, SIG_IGN); /* ignore SIGPIPE so our program doesn't crash because
